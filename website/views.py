@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.contrib.auth.models import auth, User
 from django.contrib import messages
-#from .models import User
+from website.models import Profile
 
 
 # Create your views here.
@@ -22,8 +22,11 @@ def RegisterPage(request):
         password = request.POST['password']
         
 
-        user = User.objects.create_user(username = email, password = password, first_name= firstname, last_name = lastname, age = age)
+        user = User.objects.create_user(username = email, password = password, first_name= firstname, last_name = lastname)
         user.save()
+
+        user_profile = Profile.objects.create(user=user, age=age)
+        user_profile.save()
 
         return redirect('/')
     
