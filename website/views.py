@@ -5,11 +5,14 @@ from django.contrib import messages
 from website.models import Profile, UserImages
 from django.core.files.storage import FileSystemStorage
 from django.conf import settings
-
+from subprocess import run, PIPE, Popen
 from django.urls import reverse
-
-
+import sys
+import os
 # Create your views here.
+
+first_name = ""
+last_name = ""
 
 
 def HomePage(request):
@@ -31,7 +34,10 @@ def RegisterPage(request):
 
         user_profile = Profile.objects.create(user=user, age=age)
         user_profile.save()
-       
+
+        first_name = firstname
+        last_name = lastname
+
         # return render(request, 'user_page')
         return HttpResponseRedirect(reverse('user_page'))
     
@@ -74,12 +80,18 @@ def UserPage(request):
         
 
 
-        user_image = UserImages.objects.create(user=request.user, input_image = str(request.user)+'/'+'input'+'/'+name, output_image = str(request.user)+'/'+'input'+'/'+name)
+        user_image = UserImages.objects.create(user=request.user, input_image = str(request.user)+'/'+'input'+'/'+name, output_image = str(request.user)+'/'+'output'+'/'+name)
         user_image.save()
         
-        user_obj = {'user': request.user, 'image': user_image.output_image}
+
+        #Processing from external python script    
+        BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        out = run([sys.executable, os.path.join(BASE_DIR, 'website/methods/main.py'), 'vaibhav', 'singh'], stdout = PIPE)
+        print(out.stdout.decode())
+        user_obj = {'user': request.user,'image': user_image.output_image, 'test': out.stdout.decode()}
         return render(request, 'user_page.html', user_obj)
     else:
+
         user_obj = {'user': request.user}
         return render(request, 'user_page.html', user_obj)
 

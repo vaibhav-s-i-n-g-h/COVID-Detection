@@ -15,14 +15,20 @@
     <div class="container mt-5">
         <div class="row justify-content-center">
             <div class="col-md-6 mt-5">                
-                
-                <h3>{{ user }}</h3>
-
+                <h3>Hello {{user.first_name}}</h3>
+                <h3></h3>
+                <h3>Email: {{ user }}</h3>
+                <br>
+                <br>
                 <form method="POST" enctype="multipart/form-data">
                     {% csrf_token %}
                     <input type = "file" name = "document">
                     <button type="submit">Upload</button> 
                 </form>
+                <br>
+                {% for i in test%}
+                    <h3>{{test}}</h3><br>
+                {% endfor%}
                 <br>
                 <br>
                 <p>Uploaded file: <img src="{{image.url}}" width = "720"></img></p>    
