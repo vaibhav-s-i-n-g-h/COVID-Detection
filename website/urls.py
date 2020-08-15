@@ -9,6 +9,7 @@ urlpatterns=[
 
     path('', views.HomePage, name = 'HomePage'),
     path('register/', views.RegisterPage),
-    path('login/', views.LoginPage),
+    path('login/', views.LoginPage, name= 'login_page'),
+    path('logout/', views.LogoutPage),
     path('user_page/', views.UserPage, name='user_page')
 ] + static(settings.MEDIA_URL, document_root = (settings.MEDIA_ROOT))
