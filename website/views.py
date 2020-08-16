@@ -17,7 +17,12 @@ last_name = ""
 
 
 def HomePage(request):
-    return render(request, 'home.html')
+    
+    if(request.user.is_authenticated):
+        auth.logout(request)  
+ 
+    user_obj = {'hello':'hello world','covid1': '/media/covid_1.png' , 'covid2': '/media/covid_2.png', 'covid3': '/media/covid_3.png'}
+    return render(request, 'home.html', user_obj)
 
 def RegisterPage(request):
 
@@ -69,45 +74,52 @@ def LoginPage(request):
 def LogoutPage(request):
 
     auth.logout(request)
-    return HttpResponseRedirect(reverse('login_page'))
+    return HttpResponseRedirect(reverse('HomePage'))
 
 def UserPage(request):
     
-    if(request.method == 'POST'):
-        
+    if(request.user.is_authenticated):
 
-        BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        shutil.rmtree(BASE_DIR+'/'+'website'+'/'+'methods'+'/'+'input'+'/'+'covid')
+        if(request.method == 'POST' and len(request.FILES) != 0):
+            
+
+            BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            shutil.rmtree(BASE_DIR+'/'+'website'+'/'+'methods'+'/'+'input'+'/'+'covid')
+
+            uploaded_file = request.FILES['document']
+            
+            fs = FileSystemStorage(location = settings.MEDIA_ROOT+'/'+str(request.user.username)+'/'+'output')
+            fs.save('trial', uploaded_file)
+            os.remove(settings.MEDIA_ROOT+'/'+str(request.user.username)+'/'+'output/'+'trial')    
+            
+            fs = FileSystemStorage(location = settings.MEDIA_ROOT+'/'+str(request.user.username)+'/'+'input')
+            name = fs.save(uploaded_file.name, uploaded_file)
+            
+            fs = FileSystemStorage(location = BASE_DIR+'/'+'website'+'/'+'methods'+'/'+'input'+'/'+'covid')
+            name = fs.save(uploaded_file.name, uploaded_file)
+
+            output_image_name_fetureMap = str(request.user)+'/'+'output'+'/'+'featureMap_'+name
+            output_image_name_gradcam = str(request.user)+'/'+'output'+'/'+'gradcam_'+name
+            output_image_name_fetureMap2 = str(request.user)+'/'+'output'+'/'+'featureMap2_'+name
+            output_image_name_gradcam2 = str(request.user)+'/'+'output'+'/'+'gradcam2_'+name
 
 
-        uploaded_file = request.FILES['document']
-        
-        fs = FileSystemStorage(location = settings.MEDIA_ROOT+'/'+str(request.user.username)+'/'+'output')
-        fs.save('trial', uploaded_file)
-        os.remove(settings.MEDIA_ROOT+'/'+str(request.user.username)+'/'+'output/'+'trial')    
-        
-        fs = FileSystemStorage(location = settings.MEDIA_ROOT+'/'+str(request.user.username)+'/'+'input')
-        name = fs.save(uploaded_file.name, uploaded_file)
-        
-        fs = FileSystemStorage(location = BASE_DIR+'/'+'website'+'/'+'methods'+'/'+'input'+'/'+'covid')
-        name = fs.save(uploaded_file.name, uploaded_file)
+            user_image = UserImages.objects.create(user=request.user, input_image = str(request.user)+'/'+'input'+'/'+name, output_image_featureMap = output_image_name_fetureMap, output_image_gradcam = output_image_name_gradcam, output_image_featureMap2 = output_image_name_fetureMap2, output_image_gradcam2 = output_image_name_gradcam2)
+            user_image.save()
+            
 
-        output_image_name = str(request.user)+'/'+'output'+'/'+name
-
-        user_image = UserImages.objects.create(user=request.user, input_image = str(request.user)+'/'+'input'+'/'+name, output_image = str(request.user)+'/'+'output'+'/'+name)
-        user_image.save()
+            #Processing from external python script    
+            BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            out = run([sys.executable, os.path.join(BASE_DIR, 'website\methods\image_load.py'), BASE_DIR+'/'+'website'+'/'+'methods',BASE_DIR+'/'+'website'+'/'+'images/', output_image_name_fetureMap, output_image_name_gradcam, output_image_name_fetureMap2, output_image_name_gradcam2], stdout = PIPE)
+            # print(out.stdout.decode())
+            
+            user_obj = {'user': request.user, 'featureMap1': user_image.output_image_featureMap,'featureMap2': user_image.output_image_featureMap2,'gradcam1': user_image.output_image_gradcam,'gradcam2': user_image.output_image_gradcam2,'test': out.stdout.decode(),'input_image': user_image.input_image}
+            return render(request, 'user_page.html', user_obj)
         
+        else:
 
-        #Processing from external python script    
-        BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        out = run([sys.executable, os.path.join(BASE_DIR, 'website\methods\image_load.py'), BASE_DIR+'/'+'website'+'/'+'methods',BASE_DIR+'/'+'website'+'/'+'images/', output_image_name], stdout = PIPE)
-        print(out.stdout.decode())
-        
-        user_obj = {'user': request.user,'output_image': user_image.output_image, 'test': out.stdout.decode(),'input_image': user_image.input_image}
-        return render(request, 'user_page.html', user_obj)
-    
+            user_obj = {'user': request.user}
+            return render(request, 'user_page.html', user_obj)
     else:
-
-        user_obj = {'user': request.user}
-        return render(request, 'user_page.html', user_obj)
-
+        
+        return HttpResponseRedirect(reverse('login_page'))

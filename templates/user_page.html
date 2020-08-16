@@ -16,34 +16,43 @@
 <body>
 
     <div class="container">
+        <h1>COVID DETECTION FROM XRAY</h1>
         <div class="row justify-content-center">
             <div class="col-12">
+                
                 <br>
                 <h3>Hello {{user.first_name}} {{user.last_name}}</h3>
                 <h3></h3>
                 <h3>Email: {{ user }}</h3>
                 <br>
-                <a href="home">LOGOUT</a>
+                <a href="../">LOGOUT</a>
                 <br>
                 <form method="POST" enctype="multipart/form-data">
                     {% csrf_token %}
                     <input type="file" name="document">
                     <button type="submit">Upload</button>
                 </form>
-                <!--<br>
-                {% for i in test%}
-                
-                    
-                    <h3>{{i}}</h3>
-                {% endfor%}
-                <br>-->
                 <br>
-                <div class="row">
-                    <div class="col-md-6">
+                {% if 'u' in 'stu' %}
+                    <h3>{{test}}</h3>
+                {% endif %}
+                <br>
+                <br>
+                <div class="col-12">
+                    <!--<div class="col-md-6">
                         <p>Uploaded file: <img src="{{input_image.url}}" width="480"></img></p>
+                    </div>-->
+                    <div class="row-md-3">
+                        <p>Output file: <img src="{{featureMap1.url}}" width="1080" height = "360"></img></p>
                     </div>
-                    <div class="col-md-6">
-                        <p>Output file: <img src="{{output_image.url}}" width="480"></img></p>
+                    <div class="row-md-3">
+                        <p>Output file: <img src="{{gradcam1.url}}" width="1080" height = "360"></img></p>
+                    </div>
+                    <div class="row-md-3">
+                        <p>Output file: <img src="{{featureMap2.url}}" width="1080" height = "360"></img></p>
+                    </div>
+                    <div class="row-md-3">
+                        <p>Output file: <img src="{{gradcam2.url}}" width="1080" height = "360"></img></p>
                     </div>
                 </div>
             </div>

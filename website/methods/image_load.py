@@ -40,7 +40,7 @@ datagen = image.ImageDataGenerator(
 #     batch_size = 1,
 #     class_mode = 'binary')
 
-def predict_covid_and_plot(  X_test_batch , path, name, class_of_interest=1):
+def predict_covid_and_plot(  X_test_batch , path, name_featureMap, name_gradcam, class_of_interest=1):
     new_image = X_test_batch[0]
     img=new_image
     # check prediction
@@ -48,7 +48,7 @@ def predict_covid_and_plot(  X_test_batch , path, name, class_of_interest=1):
     model=model_loaded
     
     pred = model.predict(X_test_batch)
-    print(pred)
+    # print(pred)
     seed_input =new_image
     classlabel = ['covid','pnemonia']
     penultimate_layer_idx = utils.find_layer_idx(model, "conv2d_8")
@@ -75,7 +75,7 @@ def predict_covid_and_plot(  X_test_batch , path, name, class_of_interest=1):
     # w * penultimate_output_value to zero out, even for reasonable fp precision of float32.
     grad_wrt_fmap_eval /= (np.max(grad_wrt_fmap_eval) + K.epsilon())
 
-    print(grad_wrt_fmap_eval.shape)
+    # print(grad_wrt_fmap_eval.shape)
     alpha_k_c           = grad_wrt_fmap_eval.mean(axis=(0,1,2)).reshape((1,1,1,-1))
     Lc_Grad_CAM         = np.maximum(np.sum(fmap_eval*alpha_k_c,axis=-1),0).squeeze()
 
@@ -93,13 +93,13 @@ def predict_covid_and_plot(  X_test_batch , path, name, class_of_interest=1):
     plt.ylabel("alpha_k^c")
     plt.title("The {}th feature map has the largest weight alpha^k_c".format(
         np.argmax(alpha_k_c.flatten())))
-    plt.savefig('FeatureMapStats_read.png',dpi=100)    ############################## name of first image
+    plt.savefig(path+name_featureMap,dpi=100)    ############################## name of first image
     #plt.show()
     plot_map(grad_CAM,classlabel,class_idx,pred,img)
-    plt.savefig(path+name)                         ###########################name of second image
+    plt.savefig(path+name_gradcam)                         ###########################name of second image
     return pred[0][0]
 
-def predict_normal_and_pneumonia(  X_test_batch , path, name,class_of_interest=1):
+def predict_normal_and_pneumonia(  X_test_batch , path, name_featureMap, name_gradcam, class_of_interest=1):
     new_image = X_test_batch[0]
     img=new_image
     # check prediction
@@ -107,7 +107,7 @@ def predict_normal_and_pneumonia(  X_test_batch , path, name,class_of_interest=1
     model=model_loaded
     
     pred = model.predict(X_test_batch)
-    print(pred)
+    # print(pred)
     seed_input =new_image
     classlabel = ['normal','pnemonia']
     penultimate_layer_idx = utils.find_layer_idx(model, "conv2d_28") 
@@ -134,7 +134,7 @@ def predict_normal_and_pneumonia(  X_test_batch , path, name,class_of_interest=1
     # w * penultimate_output_value to zero out, even for reasonable fp precision of float32.
     grad_wrt_fmap_eval /= (np.max(grad_wrt_fmap_eval) + K.epsilon())
 
-    print(grad_wrt_fmap_eval.shape)
+    # print(grad_wrt_fmap_eval.shape)
     alpha_k_c           = grad_wrt_fmap_eval.mean(axis=(0,1,2)).reshape((1,1,1,-1))
     Lc_Grad_CAM         = np.maximum(np.sum(fmap_eval*alpha_k_c,axis=-1),0).squeeze()
 
@@ -150,18 +150,21 @@ def predict_normal_and_pneumonia(  X_test_batch , path, name,class_of_interest=1
     plt.ylabel("alpha_k^c")
     plt.title("The {}th feature map has the largest weight alpha^k_c".format(
         np.argmax(alpha_k_c.flatten())))
-    plt.savefig('FeatureMapStats_read2.png',dpi=100)    ############################## name of first image
+    plt.savefig(path+name_featureMap,dpi=100)    ############################## name of first image
     
     #plt.show()
     plot_map(grad_CAM,classlabel,class_idx,pred,img)
-    plt.savefig('gradcam2.png')                         ###########################name of second image
+    plt.savefig(path+name_gradcam)                         ###########################name of second image
     return pred[0][0]
 
 if __name__ == "__main__":
 
     BASE_DIR = sys.argv[1]
     output_image_path = sys.argv[2]
-    output_image_name = sys.argv[3]
+    output_image_name_featureMap = sys.argv[3]
+    output_image_name_gradcam = sys.argv[4]
+    output_image_name_featureMap2 = sys.argv[5]
+    output_image_name_gradcam2 = sys.argv[6]
 
     datagen = image.ImageDataGenerator(
         rescale = 1./255,
@@ -180,5 +183,7 @@ if __name__ == "__main__":
 
     X_test_batch,Y_test_batch = next(test_generator_single)
 
-    print(predict_covid_and_plot(X_test_batch, output_image_path, output_image_name))   #it will return an integer and generate two images
-    print(predict_normal_and_pneumonia(X_test_batch, output_image_path, output_image_name)) #it will return an integer and generate two images
+    isCovid = (predict_covid_and_plot(X_test_batch, output_image_path, output_image_name_featureMap, output_image_name_gradcam))   #it will return an integer and generate two images
+    isPneumonia = (predict_normal_and_pneumonia(X_test_batch, output_image_path, output_image_name_featureMap2, output_image_name_gradcam2)) #it will return an integer and generate two images
+
+    # print(isCovid)
