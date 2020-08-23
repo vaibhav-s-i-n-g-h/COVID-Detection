@@ -11,20 +11,31 @@ from vis.utils import utils
 tf.compat.v1.disable_eager_execution()
 
 
+#utility to get index of neural network layer 
 def getLayerIndexByName(model, layername):
     for idx, layer in enumerate(model.layers):
         if layer.name == layername:
             return idx
 
 
+#utility to plot map and other data
 def plot_map(grads , classlabel , class_idx ,pred,img):
     fig, axes = plt.subplots(1,2,figsize=(14,5))
     axes[0].imshow(img)
     axes[1].imshow(img)
     i = axes[1].imshow(grads,cmap="jet",alpha=0.8)
     fig.colorbar(i)
-    print("  Predicted Class= ",classlabel[class_idx] , ",  SCORE = ",pred[0][0] )
+    
+    if(classlabel[class_idx] == 'covid' or classlabel[class_idx] == 'normal'):
+        print("Predicted Class= ",classlabel[class_idx])
+        print("Probability = ",2*(50-pred[0][0]*100))
+    
+    elif(classlabel[class_idx] == 'pneumonia'):
+        print("Predicted Class= ",classlabel[class_idx])
+        print("Probability = ",2*(pred[0][0]*100-50))
+    
 
+#data generator to load data
 datagen = image.ImageDataGenerator(
     rescale = 1./255,
     shear_range = 0.2,
@@ -32,14 +43,7 @@ datagen = image.ImageDataGenerator(
     horizontal_flip = True,
 )
 
-# TEST_PATH  = "pneumonia-covid/test"  ###folder path of input image build two folder covid and pneumonia inside this and put file in any of these
-
-# test_generator_single = datagen.flow_from_directory(
-#     TEST_PATH,
-#     target_size = (224,224),
-#     batch_size = 1,
-#     class_mode = 'binary')
-
+#utility to predict and generate heat map of last layer  for covid v/s pneumonia
 def predict_covid_and_plot(  X_test_batch , path, name_featureMap, name_gradcam, class_of_interest=1):
     new_image = X_test_batch[0]
     img=new_image
@@ -50,7 +54,7 @@ def predict_covid_and_plot(  X_test_batch , path, name_featureMap, name_gradcam,
     pred = model.predict(X_test_batch)
     # print(pred)
     seed_input =new_image
-    classlabel = ['covid','pnemonia']
+    classlabel = ['covid','pneumonia']
     penultimate_layer_idx = utils.find_layer_idx(model, "conv2d_8")
     if pred[0][0]<0.5:
         class_idx=0
@@ -94,11 +98,12 @@ def predict_covid_and_plot(  X_test_batch , path, name_featureMap, name_gradcam,
     plt.title("The {}th feature map has the largest weight alpha^k_c".format(
         np.argmax(alpha_k_c.flatten())))
     plt.savefig(path+name_featureMap,dpi=100)    ############################## name of first image
-    #plt.show()
+    
     plot_map(grad_CAM,classlabel,class_idx,pred,img)
     plt.savefig(path+name_gradcam)                         ###########################name of second image
     return pred[0][0]
 
+#utility to predict and generate heat map of last layer  for normal v/s pneumonia
 def predict_normal_and_pneumonia(  X_test_batch , path, name_featureMap, name_gradcam, class_of_interest=1):
     new_image = X_test_batch[0]
     img=new_image
@@ -107,9 +112,9 @@ def predict_normal_and_pneumonia(  X_test_batch , path, name_featureMap, name_gr
     model=model_loaded
     
     pred = model.predict(X_test_batch)
-    # print(pred)
+    
     seed_input =new_image
-    classlabel = ['normal','pnemonia']
+    classlabel = ['normal','pneumonia']
     penultimate_layer_idx = utils.find_layer_idx(model, "conv2d_28") 
     if pred[0][0]<0.5:
         class_idx=0
@@ -141,6 +146,7 @@ def predict_normal_and_pneumonia(  X_test_batch , path, name_featureMap, name_gr
     ## upsampling the class activation map to th esize of ht input image
     scale_factor        = np.array(img.shape[:-1])/np.array(Lc_Grad_CAM.shape)
     _grad_CAM           = zoom(Lc_Grad_CAM,scale_factor)
+    
     ## normalize to range between 0 and 1
     arr_min, arr_max    = np.min(_grad_CAM), np.max(_grad_CAM)
     grad_CAM            = (_grad_CAM - arr_min) / (arr_max - arr_min + K.epsilon())
@@ -152,7 +158,6 @@ def predict_normal_and_pneumonia(  X_test_batch , path, name_featureMap, name_gr
         np.argmax(alpha_k_c.flatten())))
     plt.savefig(path+name_featureMap,dpi=100)    ############################## name of first image
     
-    #plt.show()
     plot_map(grad_CAM,classlabel,class_idx,pred,img)
     plt.savefig(path+name_gradcam)                         ###########################name of second image
     return pred[0][0]
@@ -186,4 +191,3 @@ if __name__ == "__main__":
     isCovid = (predict_covid_and_plot(X_test_batch, output_image_path, output_image_name_featureMap, output_image_name_gradcam))   #it will return an integer and generate two images
     isPneumonia = (predict_normal_and_pneumonia(X_test_batch, output_image_path, output_image_name_featureMap2, output_image_name_gradcam2)) #it will return an integer and generate two images
 
-    # print(isCovid)

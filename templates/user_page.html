@@ -33,9 +33,9 @@
                     <button type="submit">Upload</button>
                 </form>
                 <br>
-                {% if 'u' in 'stu' %}
-                    <h3>{{test}}</h3>
-                {% endif %}
+                {% for value in test %}
+                    <h3>{{value}}</h3>
+                {% endfor %}
                 <br>
                 <br>
                 <div class="col-12">
@@ -43,16 +43,16 @@
                         <p>Uploaded file: <img src="{{input_image.url}}" width="480"></img></p>
                     </div>-->
                     <div class="row-md-3">
-                        <p>Output file: <img src="{{featureMap1.url}}" width="1080" height = "360"></img></p>
+                        <p>This is the Heat Map of the Last Convulation Layer in the Model for Covid vs Pneumonia<img src="{{gradcam1.url}}" width="1080" height = "360"></img></p>
                     </div>
                     <div class="row-md-3">
-                        <p>Output file: <img src="{{gradcam1.url}}" width="1080" height = "360"></img></p>
+                        <p>Featuremap for Covid vs Pneumonia<img src="{{featureMap1.url}}" width="1080" height = "360"></img></p>
                     </div>
                     <div class="row-md-3">
-                        <p>Output file: <img src="{{featureMap2.url}}" width="1080" height = "360"></img></p>
+                        <p>This is the Heat Map of the Last Convulation Layer in the Model for Normal vs Pneumonia<img src="{{gradcam2.url}}" width="1080" height = "360"></img></p>
                     </div>
                     <div class="row-md-3">
-                        <p>Output file: <img src="{{gradcam2.url}}" width="1080" height = "360"></img></p>
+                        <p>Featuremap for Normal vs Pneumonia<img src="{{featureMap2.url}}" width="1080" height = "360"></img></p>
                     </div>
                 </div>
             </div>

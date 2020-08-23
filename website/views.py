@@ -33,16 +33,37 @@ def RegisterPage(request):
         age = request.POST['age']
         email = request.POST['email']
         password = request.POST['password']
+
+        if(email == ""):
+            obj={'result': 'Must Enter an email.'}
+            return render(request, 'register.html', obj)
         
+        if(password == ""):
+            obj={'result': 'Must Enter a Password.'}
+            return render(request, 'register.html', obj)
 
-        user = User.objects.create_user(username = email, password = password, first_name= firstname, last_name = lastname)
-        user.save()
+        if(firstname == ""):
+            obj={'result': 'Must Enter a Firstname.'}
+            return render(request, 'register.html', obj)
+        
+        if(lastname == ""):
+            obj={'result': 'Must Enter a lastname.'}
+            return render(request, 'register.html', obj)
+        
+        if User.objects.filter(username=email).exists():
+            obj={'result': 'Someone has already registered with the above email id.'}
+            return render(request, 'register.html', obj)
+        
+        else:
 
-        user_profile = Profile.objects.create(user=user, age=age)
-        user_profile.save()
+            user = User.objects.create_user(username = email, password = password, first_name= firstname, last_name = lastname)
+            user.save()
 
-        first_name = firstname
-        last_name = lastname
+            user_profile = Profile.objects.create(user=user, age=age)
+            user_profile.save()
+
+            first_name = firstname
+            last_name = lastname
 
         # return render(request, 'user_page')
         return HttpResponseRedirect(reverse('user_page'))
@@ -111,9 +132,18 @@ def UserPage(request):
             #Processing from external python script    
             BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             out = run([sys.executable, os.path.join(BASE_DIR, 'website\methods\image_load.py'), BASE_DIR+'/'+'website'+'/'+'methods',BASE_DIR+'/'+'website'+'/'+'images/', output_image_name_fetureMap, output_image_name_gradcam, output_image_name_fetureMap2, output_image_name_gradcam2], stdout = PIPE)
-            # print(out.stdout.decode())
-            
-            user_obj = {'user': request.user, 'featureMap1': user_image.output_image_featureMap,'featureMap2': user_image.output_image_featureMap2,'gradcam1': user_image.output_image_gradcam,'gradcam2': user_image.output_image_gradcam2,'test': out.stdout.decode(),'input_image': user_image.input_image}
+            text = out.stdout.decode()
+            # print(text)
+            text_list_temp = text.split('\n')
+            text_list = list()
+            j=0
+            for value in text_list_temp:
+                if(j!=0):
+                    text_list.append(value)
+                j+=1
+
+
+            user_obj = {'user': request.user, 'featureMap1': user_image.output_image_featureMap,'featureMap2': user_image.output_image_featureMap2,'gradcam1': user_image.output_image_gradcam,'gradcam2': user_image.output_image_gradcam2,'test': text_list}
             return render(request, 'user_page.html', user_obj)
         
         else:
